@@ -1,5 +1,7 @@
+#include "odin-code-generator.h"
 
-int main()
+int main(int argc, char *argv[])
 {
-    return 0;
+    OdinCodeGenerator generator;
+    return google::protobuf::compiler::PluginMain(argc, argv, &generator);
 }
