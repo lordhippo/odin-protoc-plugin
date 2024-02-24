@@ -4,7 +4,7 @@
 A Protobuf compiler [plugin](https://protobuf.dev/reference/other/#plugins) for Odin. It should be used with the runtime [odin-protobuf](https://github.com/lordhippo/odin-protobuf) library.
 
 ## Usage
-Put this plugin's binary next to a Protobuf Compiler (protoc) and use `--odin_out` argument to generate Odin files.
+Put this plugin's binary next to a [Protobuf Compiler (protoc)](https://github.com/protocolbuffers/protobuf) or in the PATH. Then use `--odin_out` argument to generate Odin files.
 
 ## Sample output
 For this example proto file:
