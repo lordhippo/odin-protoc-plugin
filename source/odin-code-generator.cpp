@@ -9,13 +9,15 @@ struct Context
 {
     google::protobuf::io::Printer printer;
     std::string *error;
+    std::string_view proto_package;
 };
 
 // replaces '.' with '_' in type names.
 // idx.e. FirstType.SecondType -> FirstType_SecondType
-static std::string ConvertFullTypeName(const std::string_view full_name)
+static std::string ConvertFullTypeName(const std::string_view full_name, const std::string_view package_name)
 {
-    std::string result{full_name};
+    const size_t offset = package_name.empty() ? 0 : package_name.size() + 1;
+    std::string result{full_name.substr(offset)};
     std::replace(result.begin(), result.end(), '.', '_');
     return result;
 }
@@ -114,17 +116,17 @@ static std::string_view GetOdinBuiltinTypeName(const OdinBuiltinType type)
     }
 }
 
-static std::string GetOdinFieldTypeName(const FieldDescriptor &field_desc)
+static std::string GetOdinFieldTypeName(const FieldDescriptor &field_desc, const std::string_view package_name)
 {
     std::string type_name{};
 
     if (const Descriptor *const message_desc = field_desc.message_type(); message_desc)
     {
-        type_name = ConvertFullTypeName(message_desc->full_name());
+        type_name = ConvertFullTypeName(message_desc->full_name(), package_name);
     }
     else if (const EnumDescriptor *const enum_desc = field_desc.enum_type(); enum_desc)
     {
-        type_name = ConvertFullTypeName(enum_desc->full_name());
+        type_name = ConvertFullTypeName(enum_desc->full_name(), package_name);
     }
     else
     {
@@ -159,7 +161,7 @@ static bool PrintField(const FieldDescriptor &field_desc, Context *const context
 
     const std::map<std::string, std::string> vars{
         {"name", field_desc.name()},
-        {"odin_type", GetOdinFieldTypeName(field_desc)},
+        {"odin_type", GetOdinFieldTypeName(field_desc, context->proto_package)},
         {"id", std::to_string(field_desc.number())},
         {"proto_type", std::to_string((int) field_desc.type())},
         {"tags", GetFieldTags(field_desc)},
@@ -196,7 +198,7 @@ static bool PrintOneof(const OneofDescriptor &oneof_desc, Context *const context
 static bool PrintEnum(const EnumDescriptor &enum_desc, Context *const context)
 {
     std::map<std::string, std::string> vars{
-        {"name", ConvertFullTypeName(enum_desc.full_name())},
+        {"name", ConvertFullTypeName(enum_desc.full_name(), context->proto_package)},
     };
 
     context->printer.Print(vars, "$name$ :: enum {\n");
@@ -223,7 +225,7 @@ static bool PrintEnum(const EnumDescriptor &enum_desc, Context *const context)
 static bool PrintMessage(const Descriptor &message_desc, Context *const context)
 {
     const std::map<std::string, std::string> vars{
-        {"name", ConvertFullTypeName(message_desc.full_name())},
+        {"name", ConvertFullTypeName(message_desc.full_name(), context->proto_package)},
     };
 
     context->printer.Print(vars, "$name$ :: struct {\n");
@@ -273,7 +275,7 @@ static bool PrintFile(const FileDescriptor &file_desc, Context *const context)
     if (!file_desc.package().empty())
     {
         package_name += '_';
-        package_name += file_desc.package();
+        package_name += ConvertFullTypeName(file_desc.package(), "");
     }
 
     const std::map<std::string, std::string> vars{
@@ -313,6 +315,7 @@ bool OdinCodeGenerator::Generate(const FileDescriptor *const file, const std::st
     Context context{
         .printer = {output, '$'},
         .error = error,
+        .proto_package = file->package(),
     };
 
     return PrintFile(*file, &context);
