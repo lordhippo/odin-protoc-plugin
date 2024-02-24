@@ -1,4 +1,4 @@
-name: cpp checks
+name: C++ checks
 
 on: [workflow_dispatch, pull_request]
 
