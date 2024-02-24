@@ -128,12 +128,12 @@ static std::string GetOdinFieldTypeName(const FieldDescriptor &field_desc, const
     else
     {
         const OdinBuiltinType odin_type = GetOdinBuiltinType(field_desc.type());
-        type_name = std::string{GetOdinBuiltinTypeName(odin_type)};
+        type_name = GetOdinBuiltinTypeName(odin_type);
     }
 
     if (field_desc.is_repeated())
     {
-        type_name = "[](" + type_name + ")";
+        type_name = std::format("[]({})", type_name);
     }
 
     return type_name;
@@ -164,7 +164,7 @@ static bool PrintField(const FieldDescriptor &field_desc, Context *const context
         {"tags", GetFieldTags(field_desc)},
     };
 
-    context->printer.Print(vars, "$name$ : $odin_type$ `id:\"$id$\" type:\"$proto_type$\"$tags$`\n");
+    context->printer.Print(vars, "$name$ : $odin_type$ `id:\"$id$\" type:\"$proto_type$\"$tags$`,\n");
 
     return true;
 }
@@ -187,7 +187,7 @@ static bool PrintOneof(const OneofDescriptor &oneof_desc, Context *const context
     }
 
     context->printer.Outdent();
-    context->printer.Print("}\n");
+    context->printer.Print("}\n\n");
 
     return true;
 }
@@ -214,7 +214,7 @@ static bool PrintEnum(const EnumDescriptor &enum_desc, Context *const context)
     }
 
     context->printer.Outdent();
-    context->printer.Print("}\n");
+    context->printer.Print("}\n\n");
 
     return true;
 }
@@ -237,7 +237,7 @@ static bool PrintMessage(const Descriptor &message_desc, Context *const context)
     }
 
     context->printer.Outdent();
-    context->printer.Print("}\n");
+    context->printer.Print("}\n\n");
 
     for (int idx = 0; idx < message_desc.nested_type_count(); ++idx)
     {
