@@ -175,7 +175,7 @@ static bool PrintOneof(const OneofDescriptor &oneof_desc, Context *const context
 		{"name", oneof_desc.name()},
 	};
 
-	context->printer.Print(vars, "$name$: struct #raw_union {\n");
+	context->printer.Print(vars, "\n$name$: struct #raw_union {\n");
 	context->printer.Indent();
 
 	for (int idx = 0; idx < oneof_desc.field_count(); ++idx)
@@ -187,7 +187,7 @@ static bool PrintOneof(const OneofDescriptor &oneof_desc, Context *const context
 	}
 
 	context->printer.Outdent();
-	context->printer.Print("}\n\n");
+	context->printer.Print("}\n");
 
 	return true;
 }
@@ -198,7 +198,7 @@ static bool PrintEnum(const EnumDescriptor &enum_desc, Context *const context)
 		{"name", ConvertFullTypeName(enum_desc.full_name(), context->proto_package)},
 	};
 
-	context->printer.Print(vars, "$name$ :: enum {\n");
+	context->printer.Print(vars, "\n$name$ :: enum {\n");
 	context->printer.Indent();
 
 	vars.clear();
@@ -214,7 +214,7 @@ static bool PrintEnum(const EnumDescriptor &enum_desc, Context *const context)
 	}
 
 	context->printer.Outdent();
-	context->printer.Print("}\n\n");
+	context->printer.Print("}\n");
 
 	return true;
 }
@@ -225,19 +225,34 @@ static bool PrintMessage(const Descriptor &message_desc, Context *const context)
 		{"name", ConvertFullTypeName(message_desc.full_name(), context->proto_package)},
 	};
 
-	context->printer.Print(vars, "$name$ :: struct {\n");
+	context->printer.Print(vars, "\n$name$ :: struct {\n");
 	context->printer.Indent();
 
 	for (int idx = 0; idx < message_desc.field_count(); ++idx)
 	{
-		if (!PrintField(*message_desc.field(idx), context))
+		const FieldDescriptor &field = *message_desc.field(idx);
+		if (field.containing_oneof() != nullptr)
+		{
+			// oneof fields will be generated separately
+			continue;
+		}
+
+		if (!PrintField(field, context))
+		{
+			return false;
+		}
+	}
+
+	for (int idx = 0; idx < message_desc.oneof_decl_count(); ++idx)
+	{
+		if (!PrintOneof(*message_desc.oneof_decl(idx), context))
 		{
 			return false;
 		}
 	}
 
 	context->printer.Outdent();
-	context->printer.Print("}\n\n");
+	context->printer.Print("}\n");
 
 	for (int idx = 0; idx < message_desc.nested_type_count(); ++idx)
 	{
@@ -250,14 +265,6 @@ static bool PrintMessage(const Descriptor &message_desc, Context *const context)
 	for (int idx = 0; idx < message_desc.enum_type_count(); ++idx)
 	{
 		if (!PrintEnum(*message_desc.enum_type(idx), context))
-		{
-			return false;
-		}
-	}
-
-	for (int idx = 0; idx < message_desc.oneof_decl_count(); ++idx)
-	{
-		if (!PrintOneof(*message_desc.oneof_decl(idx), context))
 		{
 			return false;
 		}
@@ -279,7 +286,7 @@ static bool PrintFile(const FileDescriptor &file_desc, Context *const context)
 		{"package", package_name},
 	};
 
-	context->printer.Print(vars, "package $package$\n\n");
+	context->printer.Print(vars, "\npackage $package$\n");
 
 	// TODO: handle dependencies, i.e. file_desc.dependency and file_desc.public_dependency
 
