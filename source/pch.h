@@ -7,5 +7,4 @@
 #include <google/protobuf/io/printer.h>
 
 #include <algorithm>
-#include <format>
 #include <vector>

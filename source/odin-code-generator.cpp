@@ -133,7 +133,7 @@ static std::string GetOdinFieldTypeName(const FieldDescriptor &field_desc, const
 
 	if (field_desc.is_repeated())
 	{
-		type_name = std::format("[]({})", type_name);
+		type_name = "[](" + type_name + ")";
 	}
 
 	return type_name;
