@@ -61,8 +61,6 @@ CheckOptions:
 # Parameters
   - key:             readability-identifier-naming.ParameterCase
     value:           lower_case
-  - key:             readability-identifier-naming.ParameterPrefix
-    value:           t_
 
 # Constants
   - key:             readability-identifier-naming.ConstantMemberCase

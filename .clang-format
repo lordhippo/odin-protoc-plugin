@@ -2,8 +2,8 @@
 Language: Cpp
 BasedOnStyle: Microsoft
 AccessModifierOffset: -4
-AlignConsecutiveAssignments: true
-AlignConsecutiveDeclarations: true
+AlignConsecutiveAssignments: false
+AlignConsecutiveDeclarations: false
 AlignOperands: true
 AlwaysBreakTemplateDeclarations: Yes
 BraceWrapping: 
