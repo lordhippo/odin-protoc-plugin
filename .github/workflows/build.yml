@@ -1,0 +1,110 @@
+name: Build
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+jobs:
+  matrix-prep:
+    runs-on: ubuntu-latest
+    steps:
+      - id: linux
+        run: echo "os=ubuntu-latest" >> $GITHUB_OUTPUT
+      - id: windows
+        run: echo "os=windows-latest" >> $GITHUB_OUTPUT
+      - id: macos
+        run: echo "os=macos-latest" >> $GITHUB_OUTPUT
+    outputs:
+      os: ${{ toJSON(steps.*.outputs.os) }}
+
+  build:
+    name: ${{ matrix.preset }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+
+    needs:
+      - matrix-prep
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ${{ fromJSON(needs.matrix-prep.outputs.os) }}
+        preset: [linux-debug, macos-debug, windows-debug, windows-release]
+        exclude:
+          - os: ubuntu-latest
+            preset: macos-debug
+          - os: ubuntu-latest
+            preset: windows-debug
+          - os: ubuntu-latest
+            preset: windows-release
+
+          - os: macos-latest
+            preset: linux-debug
+          - os: macos-latest
+            preset: windows-debug
+          - os: macos-latest
+            preset: windows-release
+
+          - os: windows-latest
+            preset: linux-debug
+          - os: windows-latest
+            preset: macos-debug
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install system packages
+        uses: ConorMacBride/install-package@v1.1.0
+        with:
+          brew: pkg-config # This is needed by vcpkg
+
+      # Install latest CMake and Ninja.
+      - uses: lukka/get-cmake@latest
+
+      # Restore from cache the previously built ports. If a "cache miss" occurs,
+      # then vcpkg is bootstrapped. Since a the vcpkg.json is being used later on
+      # to install the packages when `run-cmake` runs, no packages are installed at
+      # this time.
+      - name: Restore artifacts, or setup vcpkg (do not install any package)
+        uses:
+          lukka/run-vcpkg@v10 # Always specify the specific _version_ of the
+          # action you need, `v10` in this case to stay up
+          # to date with fixes on the v10 branch.
+        with:
+          # This is the default location of the directory containing vcpkg sources.
+          # Change it to the right location if needed.
+          vcpkgDirectory: "${{ github.workspace }}/vcpkg"
+
+      - name: Run CMake consuming CMakePresets.json and vcpkg.json by mean of vcpkg.
+        uses: lukka/run-cmake@v10
+        with:
+          # You could use CMake workflow presets defined in the CMakePresets.json
+          # with just this line below.
+          # workflowPreset: 'workflow-name'
+
+          # This is the name of the CMakePresets.json's configuration to use to generate
+          # the project files. This configuration leverages the vcpkg.cmake toolchain file to
+          # run vcpkg and install all dependencies specified in vcpkg.json.
+          configurePreset: ${{ matrix.preset }}
+          # Additional arguments can be appended to the cmake command.
+          # This is useful to reduce the number of CMake's Presets since you can reuse
+          # an existing preset with different variables.
+          # configurePresetAdditionalArgs: ['-DENABLE_YOUR_FEATURE=1']
+
+          # This is the name of the CMakePresets.json's configuration to build the project.
+          buildPreset: ${{ matrix.preset }}
+          # Additional arguments can be appended when building, for example to specify the
+          # configuration to build.
+          # This is useful to reduce the number of CMake's Presets you need in CMakePresets.json.
+          # buildPresetAdditionalArgs: ['--config Release']
+
+          # This is the name of the CMakePresets.json's configuration to test the project with.
+          testPreset: ${{ matrix.preset }}
+          # Additional arguments can be appended when testing, for example to specify the config
+          # to test.
+          # This is useful to reduce the number of CMake's Presets you need in CMakePresets.json.
+          # testPresetAdditionalArgs: ['--config Release']
