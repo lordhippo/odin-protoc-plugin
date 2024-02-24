@@ -37,4 +37,7 @@ MacroBlockBegin: ''
 MacroBlockEnd: ''
 SpaceAfterCStyleCast: true
 SpacesInAngles: false
+UseTab: Always
+IndentWidth: 4
+TabWidth: 4
 ...
