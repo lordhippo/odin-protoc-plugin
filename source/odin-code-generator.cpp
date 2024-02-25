@@ -163,12 +163,12 @@ static bool PrintField(const FieldDescriptor &field_desc, Context *const context
 
 	context->printer.Print(vars, "$name$ : $odin_type$ `");
 
-	context->printer.Print(vars, fmt::format("{0}:\"${1}$\"", "id", "id").c_str());
-	context->printer.Print(vars, fmt::format(" {0}:\"${1}$\"", "type", "proto_type").c_str());
+	context->printer.Print(vars, "id:\"$id$\"");
+	context->printer.Print(vars, " type:\"$proto_type$\"");
 
 	if (field_desc.is_packable())
 	{
-		context->printer.Print(vars, fmt::format(" {0}:\"${1}$\"", "packed", "packed").c_str());
+		context->printer.Print(vars, " packed:\"$packed$\"");
 	}
 
 	context->printer.Print("`,\n");
