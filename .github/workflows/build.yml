@@ -82,18 +82,15 @@ jobs:
           buildPreset: ${{ matrix.preset }}
           packagePreset: ${{ matrix.preset }}
         env:
-          PACKAGE_NAME: "odin-protoc-plugin" # get this from the repo name
+          PACKAGE_NAME: "odin-protoc-plugin" # TODO: get this from the repo name
           PACKAGE_VERSION: ${{ github.ref_name }}
           PACKAGE_SYSTEM: ${{ matrix.preset }}
 
       - name: Release
         uses: softprops/action-gh-release@v0.1.15
-        # remove before the final submission
-        # if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v')
         with:
           draft: true
           files: "out/build/${{ matrix.preset }}/package/*.zip"
           fail_on_unmatched_files: true
           generate_release_notes: true
-          # remove before the final submission
-          tag_name: "v.test"
