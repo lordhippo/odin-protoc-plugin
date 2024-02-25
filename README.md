@@ -29,4 +29,4 @@ SearchRequest :: struct {
 ## Missing features
 - [Default values](https://github.com/lordhippo/odin-protoc-plugin/issues/5)
 - [Dependencies](https://github.com/lordhippo/odin-protoc-plugin/issues/7)
-- [Oneof check](https://github.com/lordhippo/odin-protoc-plugin)
+- [Oneof *WhichOneof* check](https://github.com/lordhippo/odin-protoc-plugin/issues/6)
