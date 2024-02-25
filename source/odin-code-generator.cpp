@@ -197,7 +197,7 @@ static bool PrintOneof(const OneofDescriptor &oneof_desc, Context *const context
 	}
 
 	context->printer.Outdent();
-	context->printer.Print("}\n");
+	context->printer.Print("},\n");
 
 	return true;
 }
