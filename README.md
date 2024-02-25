@@ -1,6 +1,5 @@
 # odin-protoc-plugin
 ![build status](https://github.com/lordhippo/odin-protoc-plugin/actions/workflows/build.yml/badge.svg)
-![c++ checks](https://github.com/lordhippo/odin-protoc-plugin/actions/workflows/cpp-checks.yml/badge.svg)
 
 A Protobuf compiler [plugin](https://protobuf.dev/reference/other/#plugins) for Odin. It should be used with the runtime [odin-protobuf](https://github.com/lordhippo/odin-protobuf) library.
 
