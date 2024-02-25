@@ -153,7 +153,6 @@ static std::string GetFieldTags(const FieldDescriptor &field_desc)
 
 static bool PrintField(const FieldDescriptor &field_desc, Context *const context)
 {
-	// TODO: handle maps
 	// TODO: handle default values
 
 	const std::map<std::string, std::string> vars{
@@ -221,6 +220,9 @@ static bool PrintEnum(const EnumDescriptor &enum_desc, Context *const context)
 
 static bool PrintMessage(const Descriptor &message_desc, Context *const context)
 {
+	// we don't generate custom types for maps
+	assert(message_desc.map_key() == nullptr);
+
 	const std::map<std::string, std::string> vars{
 		{"name", ConvertFullTypeName(message_desc.full_name(), context->proto_package)},
 	};
@@ -256,7 +258,18 @@ static bool PrintMessage(const Descriptor &message_desc, Context *const context)
 
 	for (int idx = 0; idx < message_desc.nested_type_count(); ++idx)
 	{
-		if (!PrintMessage(*message_desc.nested_type(idx), context))
+		const Descriptor& nested_type = *message_desc.nested_type(idx);
+
+		// TODO: find a better way to check if it is a map
+		if (nested_type.map_key() != nullptr)
+		{
+			// Don't generate custom types for maps
+			// instead we will generate a native odin map
+			// specialization when writing the field
+			continue;
+		}
+
+		if (!PrintMessage(nested_type, context))
 		{
 			return false;
 		}
