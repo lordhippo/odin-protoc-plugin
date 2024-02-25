@@ -53,58 +53,38 @@ jobs:
             preset: macos-debug
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
       - name: Install system packages
-        uses: ConorMacBride/install-package@v1.1.0
+        uses: ConorMacBride/install-package@v1
         with:
-          brew: pkg-config # This is needed by vcpkg
+          brew: pkg-config
 
-      # Install latest CMake and Ninja.
-      - uses: lukka/get-cmake@latest
+      - name: Install CMake
+        uses: lukka/get-cmake@latest
 
-      # Restore from cache the previously built ports. If a "cache miss" occurs,
-      # then vcpkg is bootstrapped. Since a the vcpkg.json is being used later on
-      # to install the packages when `run-cmake` runs, no packages are installed at
-      # this time.
-      - name: Restore artifacts, or setup vcpkg (do not install any package)
+      - name: Setup vcpkg
         uses:
-          lukka/run-vcpkg@v10 # Always specify the specific _version_ of the
-          # action you need, `v10` in this case to stay up
-          # to date with fixes on the v10 branch.
+          lukka/run-vcpkg@v11
         with:
-          # This is the default location of the directory containing vcpkg sources.
-          # Change it to the right location if needed.
           vcpkgDirectory: "${{ github.workspace }}/vcpkg"
 
-      - name: Run CMake consuming CMakePresets.json and vcpkg.json by mean of vcpkg.
+      - name: Build
         uses: lukka/run-cmake@v10
         with:
-          # You could use CMake workflow presets defined in the CMakePresets.json
-          # with just this line below.
-          # workflowPreset: 'workflow-name'
-
-          # This is the name of the CMakePresets.json's configuration to use to generate
-          # the project files. This configuration leverages the vcpkg.cmake toolchain file to
-          # run vcpkg and install all dependencies specified in vcpkg.json.
           configurePreset: ${{ matrix.preset }}
-          # Additional arguments can be appended to the cmake command.
-          # This is useful to reduce the number of CMake's Presets since you can reuse
-          # an existing preset with different variables.
-          # configurePresetAdditionalArgs: ['-DENABLE_YOUR_FEATURE=1']
-
-          # This is the name of the CMakePresets.json's configuration to build the project.
           buildPreset: ${{ matrix.preset }}
-          # Additional arguments can be appended when building, for example to specify the
-          # configuration to build.
-          # This is useful to reduce the number of CMake's Presets you need in CMakePresets.json.
-          # buildPresetAdditionalArgs: ['--config Release']
+          packagePreset: ${{ matrix.preset }}
 
-          # This is the name of the CMakePresets.json's configuration to test the project with.
-          testPreset: ${{ matrix.preset }}
-          # Additional arguments can be appended when testing, for example to specify the config
-          # to test.
-          # This is useful to reduce the number of CMake's Presets you need in CMakePresets.json.
-          # testPresetAdditionalArgs: ['--config Release']
+      - name: Release
+        uses: softprops/action-gh-release@v0.1.15
+        # remove before the final submission
+        # if: startsWith(github.ref, 'refs/tags/v')
+        with:
+          draft: true
+          files: "${{ github.workspace }}/out/build/${{ matrix.preset }}/package/*.zip"
+          fail_on_unmatched_files: true
+          generate_release_notes: true
