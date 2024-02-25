@@ -117,9 +117,20 @@ static std::string GetOdinFieldTypeName(const FieldDescriptor &field_desc, const
 {
 	std::string type_name{};
 
+	bool is_map = false;
+
 	if (const Descriptor *const message_desc = field_desc.message_type(); message_desc)
 	{
-		type_name = ConvertFullTypeName(message_desc->full_name(), package_name);
+		if (is_map = message_desc->map_key() != nullptr; is_map)
+		{
+			const std::string key_type_str = GetOdinFieldTypeName(*message_desc->map_key(), package_name);
+			const std::string value_type_str = GetOdinFieldTypeName(*message_desc->map_value(), package_name);
+			type_name = "map[" + key_type_str + "]" + value_type_str;
+		}
+		else
+		{
+			type_name = ConvertFullTypeName(message_desc->full_name(), package_name);
+		}
 	}
 	else if (const EnumDescriptor *const enum_desc = field_desc.enum_type(); enum_desc)
 	{
@@ -131,9 +142,9 @@ static std::string GetOdinFieldTypeName(const FieldDescriptor &field_desc, const
 		type_name = GetOdinBuiltinTypeName(odin_type);
 	}
 
-	if (field_desc.is_repeated())
+	if (!is_map && field_desc.is_repeated())
 	{
-		type_name = "[](" + type_name + ")";
+		type_name = "[]" + type_name;
 	}
 
 	return type_name;
@@ -258,7 +269,7 @@ static bool PrintMessage(const Descriptor &message_desc, Context *const context)
 
 	for (int idx = 0; idx < message_desc.nested_type_count(); ++idx)
 	{
-		const Descriptor& nested_type = *message_desc.nested_type(idx);
+		const Descriptor &nested_type = *message_desc.nested_type(idx);
 
 		// TODO: find a better way to check if it is a map
 		if (nested_type.map_key() != nullptr)
