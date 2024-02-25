@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 project(protoc-gen-odin)
 
 find_package(Protobuf CONFIG REQUIRED)
+find_package(fmt CONFIG REQUIRED)
 
 set(HEADER_FILES
     source/pch.h
@@ -20,7 +21,8 @@ add_executable(${PROJECT_NAME} ${SOURCE_FILES} ${HEADER_FILES})
 
 target_link_libraries(${PROJECT_NAME} 
     protobuf::libprotobuf
-    protobuf::libprotoc)
+    protobuf::libprotoc
+    fmt::fmt)
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCE_FILES} ${HEADER_FILES})
 

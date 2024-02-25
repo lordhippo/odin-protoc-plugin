@@ -125,7 +125,7 @@ static std::string GetOdinFieldTypeName(const FieldDescriptor &field_desc, const
 		{
 			const std::string key_type_str = GetOdinFieldTypeName(*message_desc->map_key(), package_name);
 			const std::string value_type_str = GetOdinFieldTypeName(*message_desc->map_value(), package_name);
-			type_name = "map[" + key_type_str + "]" + value_type_str;
+			type_name = fmt::format("map[{}]{}", key_type_str, value_type_str);
 		}
 		else
 		{
@@ -144,22 +144,10 @@ static std::string GetOdinFieldTypeName(const FieldDescriptor &field_desc, const
 
 	if (!is_map && field_desc.is_repeated())
 	{
-		type_name = "[]" + type_name;
+		type_name = fmt::format("[]{}", type_name);
 	}
 
 	return type_name;
-}
-
-static std::string GetFieldTags(const FieldDescriptor &field_desc)
-{
-	std::string result{};
-
-	if (field_desc.is_packed())
-	{
-		result += " packed";
-	}
-
-	return result;
 }
 
 static bool PrintField(const FieldDescriptor &field_desc, Context *const context)
@@ -169,12 +157,21 @@ static bool PrintField(const FieldDescriptor &field_desc, Context *const context
 	const std::map<std::string, std::string> vars{
 		{"name", field_desc.name()},
 		{"odin_type", GetOdinFieldTypeName(field_desc, context->proto_package)},
-		{"id", std::to_string(field_desc.number())},
-		{"proto_type", std::to_string((int) field_desc.type())},
-		{"tags", GetFieldTags(field_desc)},
-	};
+		{"id", fmt::to_string(field_desc.number())},
+		{"proto_type", fmt::to_string((int) field_desc.type())},
+		{"packed", fmt::to_string(field_desc.is_packed())}};
 
-	context->printer.Print(vars, "$name$ : $odin_type$ `id:\"$id$\" type:\"$proto_type$\"$tags$`,\n");
+	context->printer.Print(vars, "$name$ : $odin_type$ `");
+
+	context->printer.Print(vars, "id:\"$id$\"");
+	context->printer.Print(vars, " type:\"$proto_type$\"");
+
+	if (field_desc.is_packable())
+	{
+		context->printer.Print(vars, " packed:\"$packed$\"");
+	}
+
+	context->printer.Print("`,\n");
 
 	return true;
 }
@@ -218,7 +215,7 @@ static bool PrintEnum(const EnumDescriptor &enum_desc, Context *const context)
 		const EnumValueDescriptor &value_desc = *enum_desc.value(idx);
 
 		vars["name"] = value_desc.name();
-		vars["value"] = std::to_string(value_desc.number());
+		vars["value"] = fmt::to_string(value_desc.number());
 
 		context->printer.Print(vars, "$name$ = $value$,\n");
 	}
@@ -299,12 +296,13 @@ static bool PrintMessage(const Descriptor &message_desc, Context *const context)
 
 static bool PrintFile(const FileDescriptor &file_desc, Context *const context)
 {
-	std::string package_name = "proto";
-	if (!file_desc.package().empty())
-	{
-		package_name += '_';
-		package_name += ConvertFullTypeName(file_desc.package(), "");
-	}
+	// TODO: read this from args
+	const std::string base_package_name = "proto";
+
+	const std::string package_name =
+		file_desc.package().empty()
+			? base_package_name
+			: fmt::format("{}_{}", base_package_name, ConvertFullTypeName(file_desc.package(), ""));
 
 	const std::map<std::string, std::string> vars{
 		{"package", package_name},
@@ -336,7 +334,7 @@ static bool PrintFile(const FileDescriptor &file_desc, Context *const context)
 bool OdinCodeGenerator::Generate(const FileDescriptor *const file, const std::string &parameter,
 								 compiler::GeneratorContext *const generator_context, std::string *const error) const
 {
-	const std::string output_filename = compiler::StripProto(file->name()) + ".pb.odin";
+	const std::string output_filename = fmt::format("{}.pb.odin", compiler::StripProto(file->name()));
 	auto *output = generator_context->Open(output_filename);
 
 	Context context{
@@ -349,9 +347,9 @@ bool OdinCodeGenerator::Generate(const FileDescriptor *const file, const std::st
 	generator_context->GetCompilerVersion(&compiler_version);
 
 	const std::map<std::string, std::string> vars{
-		{"compiler_version_major", std::to_string(compiler_version.major())},
-		{"compiler_version_minor", std::to_string(compiler_version.minor())},
-		{"compiler_version_patch", std::to_string(compiler_version.patch())},
+		{"compiler_version_major", fmt::to_string(compiler_version.major())},
+		{"compiler_version_minor", fmt::to_string(compiler_version.minor())},
+		{"compiler_version_patch", fmt::to_string(compiler_version.patch())},
 	};
 
 	context.printer.Print(
