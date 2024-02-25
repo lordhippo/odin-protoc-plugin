@@ -28,7 +28,7 @@ target_precompile_headers(${PROJECT_NAME} PUBLIC "source/pch.h")
 
 install(TARGETS ${PROJECT_NAME})
 
-set(CPACK_PACKAGE_NAME "odin-protoc-plugin")
-set(CPACK_PACKAGE_VERSION "0.1.0") # use git tag instead
-set(CPACK_SYSTEM_NAME ${VCPKG_TARGET_TRIPLET})
+set(CPACK_PACKAGE_NAME $ENV{PACKAGE_NAME})
+set(CPACK_PACKAGE_VERSION $ENV{PACKAGE_VERSION})
+set(CPACK_SYSTEM_NAME $ENV{PACKAGE_SYSTEM})
 include(CPack)

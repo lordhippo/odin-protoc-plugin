@@ -81,6 +81,10 @@ jobs:
           configurePreset: ${{ matrix.preset }}
           buildPreset: ${{ matrix.preset }}
           packagePreset: ${{ matrix.preset }}
+        env:
+          PACKAGE_NAME: "odin-protoc-plugin" # get this from the repo name
+          PACKAGE_VERSION: ${{ github.ref_name }}
+          PACKAGE_SYSTEM: ${{ matrix.preset }}
 
       - name: Release
         uses: softprops/action-gh-release@v0.1.15
