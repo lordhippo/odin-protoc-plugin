@@ -171,6 +171,18 @@ static bool PrintField(const FieldDescriptor &field_desc, Context *const context
 		context->printer.Print(vars, " packed:\"$packed$\"");
 	}
 
+	if (const Descriptor *const message_desc = field_desc.message_type();
+		message_desc && message_desc->map_key() != nullptr)
+	{
+		const std::string key_type_str = fmt::to_string((int) message_desc->map_key()->type());
+		const std::string value_type_str = fmt::to_string((int) message_desc->map_value()->type());
+
+		const std::map<std::string, std::string> map_vars{{"key_type", key_type_str}, {"value_type", value_type_str}};
+
+		context->printer.Print(map_vars, " key_type:\"$key_type$\"");
+		context->printer.Print(map_vars, " value_type:\"$value_type$\"");
+	}
+
 	context->printer.Print("`,\n");
 
 	return true;
